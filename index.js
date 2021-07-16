@@ -1,6 +1,8 @@
 const express = require("express");
 const cors = require("cors");
 const { pool } = require("./config");
+const swaggerJsDoc = require("swagger-jsdoc");
+const swaggerUi = require("swagger-ui-express");
 
 const app = express();
 
@@ -9,7 +11,34 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cors());
 app.options("*", cors());
 
+const swaggerOptions = {
+  swaggerDefinition: {
+    info: {
+      title: "R4M Sitebuilder API",
+      description: "Sitebuilder API",
+      servers: [
+        "http://localhost:3002",
+        "https://r4m-sitebuilder.herokuapp.com",
+      ],
+    },
+  },
+  apis: ["index.js"],
+};
+
+const swaggerDocs = swaggerJsDoc(swaggerOptions);
+app.use("/", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 // START OF ACTIONS
+
+/**
+ * @swagger
+ * /api/blocks:
+ *  get:
+ *    description: Returns all the blocks
+ *    responses:
+ *      '200':
+ *        decription: Success
+ */
 app.get("/api/blocks", async (request, response) => {
   try {
     const blocks = await pool.query("SELECT * FROM blocks");
@@ -30,6 +59,29 @@ app.get("/api/blocks/:id", async (request, response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/blocks:
+ *  post:
+ *    consumes:
+ *      application/json
+ *    description: Creates a new block
+ *    parameters:
+ *    - in: body
+ *      name: block
+ *      required: true
+ *      description: The block to create
+ *      schema:
+ *        type: object
+ *        properties:
+ *          type:
+ *            type: integer
+ *          md:
+ *            type: string
+ *    responses:
+ *      '200':
+ *        decription: Success
+ */
 app.post("/api/blocks/", async (request, response) => {
   try {
     const { type, md, twig, yaml, html } = request.body;
