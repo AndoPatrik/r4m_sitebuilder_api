@@ -42,6 +42,15 @@ app.post("/api/blocks/", async (request, response) => {
     throw error;
   }
 });
+
+app.get("/api/types/", async (request, response) => {
+  try {
+    const types = await pool.query("SELECT * FROM block_types");
+    response.status(200).json(types.rows);
+  } catch (error) {
+    throw error;
+  }
+});
 // END OF ACTIONS
 
 app.listen(process.env.PORT || 3002, () => {
