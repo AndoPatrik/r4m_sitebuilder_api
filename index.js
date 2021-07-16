@@ -26,7 +26,11 @@ const swaggerOptions = {
 };
 
 const swaggerDocs = swaggerJsDoc(swaggerOptions);
-app.use("/", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
+app.get("/", (request, response) => {
+  response.redirect(request.originalUrl.split("/")[0] + "/docs");
+});
 
 // START OF ACTIONS
 
@@ -34,9 +38,10 @@ app.use("/", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
  * @swagger
  * /api/blocks:
  *  get:
+ *    summary: Returns all the blocks
  *    description: Returns all the blocks
  *    responses:
- *      '200':
+ *      200:
  *        decription: Success
  */
 app.get("/api/blocks", async (request, response) => {
@@ -48,6 +53,36 @@ app.get("/api/blocks", async (request, response) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/blocks/{id}:
+ *  get:
+ *    summary: Returns specific block
+ *    description: Returns specific block by id
+ *    parameters:
+ *      - in: path
+ *        name: id
+ *        type: integer
+ *        required: true
+ *        description: Number ID of the block to gets
+ *    responses:
+ *      200:
+ *        decription: Success
+ *        schema:
+ *          type: object
+ *          properties:
+ *            id:
+ *              type: integer
+ *            yaml:
+ *              type: string
+ *            md:
+ *              type: string
+ *            twig:
+ *              type: string
+ *            html:
+ *              type: string
+ *
+ */
 app.get("/api/blocks/:id", async (request, response) => {
   const { id } = request.params;
   try {
@@ -63,14 +98,15 @@ app.get("/api/blocks/:id", async (request, response) => {
  * @swagger
  * /api/blocks:
  *  post:
+ *    summary: Creates a new block
  *    consumes:
  *      application/json
  *    description: Creates a new block
  *    parameters:
  *    - in: body
- *      name: block
+ *      name: New block
  *      required: true
- *      description: The block to create
+ *      description: New block to be created
  *      schema:
  *        type: object
  *        properties:
@@ -78,23 +114,40 @@ app.get("/api/blocks/:id", async (request, response) => {
  *            type: integer
  *          md:
  *            type: string
+ *          yaml:
+ *            type: string
+ *          twig:
+ *            type: string
+ *          html:
+ *            type: string
  *    responses:
- *      '200':
+ *      '201':
  *        decription: Success
  */
 app.post("/api/blocks/", async (request, response) => {
   try {
     const { type, md, twig, yaml, html } = request.body;
-    await pool.query(
+    const result = await pool.query(
       "INSERT INTO blocks (type, md, twig, yaml, html) VALUES ($1, $2, $3, $4, $5)",
       [type, md, twig, yaml, html]
     );
-    response.status(201).json({ status: "success", message: "Block added." });
+    console.log(result);
+    response.status(201).json({ status: "success", message: "Block created." });
   } catch (error) {
     throw error;
   }
 });
 
+/**
+ * @swagger
+ * /api/types:
+ *  get:
+ *    summary: Returns all the types
+ *    description: Returns all the types
+ *    responses:
+ *      200:
+ *        decription: Success
+ */
 app.get("/api/types/", async (request, response) => {
   try {
     const types = await pool.query("SELECT * FROM block_types");
