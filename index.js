@@ -1,8 +1,12 @@
+const authMiddleware = require('./authMiddleware') ;
+
 const express = require("express");
 const cors = require("cors");
 const { pool } = require("./config");
 const swaggerJsDoc = require("swagger-jsdoc");
 const swaggerUi = require("swagger-ui-express");
+const jwt = require('jsonwebtoken');
+
 
 const app = express();
 
@@ -44,8 +48,9 @@ app.get("/", (request, response) => {
  *      200:
  *        decription: Success
  */
-app.get("/api/blocks", async (request, response) => {
+app.get("/api/blocks", authMiddleware.authenticateToken ,  async (request, response) => {
   try {
+    console.log('USER',request.user);
     const blocks = await pool.query("SELECT * FROM blocks");
     response.json(blocks.rows);
   } catch (error) {
@@ -131,7 +136,6 @@ app.post("/api/blocks/", async (request, response) => {
       "INSERT INTO blocks (type, md, twig, yaml, html) VALUES ($1, $2, $3, $4, $5)",
       [type, md, twig, yaml, html]
     );
-    console.log(result);
     response.status(201).json({ status: "success", message: "Block created." });
   } catch (error) {
     throw error;
@@ -156,7 +160,21 @@ app.get("/api/types/", async (request, response) => {
     throw error;
   }
 });
-// END OF ACTIONS
+
+/**
+ * 
+ */
+
+app.post('/api/loginUser', (request, response) => {
+  const token = generateAccessToken({ username: request.body.username });
+  response.json(token);
+});
+
+function generateAccessToken(username) {
+  return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
+}
+
+//END OF ACTIONS
 
 app.listen(process.env.PORT || 3002, () => {
   console.log(`Server listening`);
