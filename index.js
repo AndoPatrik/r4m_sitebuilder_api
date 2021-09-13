@@ -131,7 +131,13 @@ app.get("/api/blocks/:id", async (request, response) => {
  */
 app.post("/api/blocks/", async (request, response) => {
   try {
-    const { type, md, twig, yaml, html } = request.body;
+    let { type, md, twig, yaml, html } = request.body;
+
+    md = md.replace(/(\r\n|\n|\r|\s)/gm, "");
+    twig = twig.replace(/(\r\n|\n|\r|\s)/gm, "");
+    yaml = yaml.replace(/(\r\n|\n|\r|\s)/gm, "");
+    html = html.replace(/(\r\n|\n|\r|\s)/gm, "");
+    
     const result = await pool.query(
       "INSERT INTO blocks (type, md, twig, yaml, html) VALUES ($1, $2, $3, $4, $5)",
       [type, md, twig, yaml, html]
@@ -173,6 +179,17 @@ app.post('/api/loginUser', (request, response) => {
 function generateAccessToken(username) {
   return jwt.sign(username, process.env.TOKEN_SECRET, { expiresIn: '1800s' });
 }
+
+/*
+*
+*/
+
+app.post('/api/upsertUser', (request, response) => {
+  const email = request.body.email;
+  //TODO
+  //Check if exist in db =>if so then reset token lifetime
+  //IF not insert new and create renewal token
+})
 
 //END OF ACTIONS
 
